@@ -2,6 +2,7 @@ package com.mykart.project.controller;
 
 import com.mykart.project.model.Category;
 import com.mykart.project.service.CategoryServiceImpl;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +15,7 @@ import java.util.List;
 @RestController
 public class CategoryController {
 
-    private CategoryServiceImpl categoryService;
+    private final CategoryServiceImpl categoryService;
 
     @Autowired
     public CategoryController(CategoryServiceImpl categoryService) {
@@ -28,7 +29,7 @@ public class CategoryController {
     }
 
     @PostMapping("/api/public/categories")
-    public ResponseEntity<String> createCategory(@RequestBody Category category) {
+    public ResponseEntity<String> createCategory(@Valid @RequestBody Category category) {
         categoryService.createCategory(category);
         return new ResponseEntity<>("Category added!", HttpStatus.CREATED);
     }
