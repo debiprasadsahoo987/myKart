@@ -1,0 +1,23 @@
+package com.mykart.project.service;
+
+import com.mykart.project.payload.ProductDTO;
+import com.mykart.project.payload.ProductResponse;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
+public interface ProductService {
+    ProductResponse getAllProducts();
+
+    ProductDTO addProduct(Long categoryId, ProductDTO productDTO);
+
+    ProductResponse searchByCategory(Long categoryId);
+
+    ProductResponse searchByKeyWord(String keyword);
+
+    ProductDTO updateProduct(Long productId, ProductDTO productDTO);
+
+    ProductDTO deleteProduct(Long productId);
+
+    ProductDTO updateProductImage(Long productId, MultipartFile image) throws IOException;
+}
