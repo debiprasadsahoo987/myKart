@@ -1,6 +1,5 @@
 package com.mykart.project.controller;
 
-import com.mykart.project.model.Product;
 import com.mykart.project.payload.ProductDTO;
 import com.mykart.project.payload.ProductResponse;
 import com.mykart.project.service.ProductService;

@@ -7,19 +7,14 @@ import com.mykart.project.payload.ProductDTO;
 import com.mykart.project.payload.ProductResponse;
 import com.mykart.project.repositories.CategoryRepository;
 import com.mykart.project.repositories.ProductRepository;
-import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class ProductServiceImpl implements ProductService {
