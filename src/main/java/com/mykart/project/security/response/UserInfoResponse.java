@@ -13,7 +13,6 @@ public class UserInfoResponse {
     private Long Id;
     private String username;
     private List<String> roles;
-    private String jwtToken;
 }
 
 
