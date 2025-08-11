@@ -86,6 +86,39 @@ public class CartServiceImpl implements CartService {
         return cartDTO;
     }
 
+    @Override
+    public List<CartDTO> getAllCarts() {
+        List<Cart> carts = cartRepository.findAll();
+        if(carts.isEmpty()) {
+            throw new APIException("No carts found.");
+        }
+
+        List<CartDTO> cartDTOS;
+        cartDTOS = carts.stream().map(cart -> {
+            CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+            List<ProductDTO> products = cart.getCartItems().stream().map(
+                    p->modelMapper.map(p.getProduct(), ProductDTO.class)).toList();
+            cartDTO.setProducts(products);
+            return cartDTO;
+        }).toList();
+        return cartDTOS;
+    }
+
+    @Override
+    public CartDTO getCart(String emailId, Long cartId) {
+        Cart cart = cartRepository.findKartByEmailAndCartId(emailId, cartId);
+        if(cart == null) {
+            throw new ResourceNotFoundException("Cart", "cartId", cartId);
+        }
+
+        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+        cart.getCartItems().forEach(cartItem -> {cartItem.getProduct().setProductQuantity(cartItem.getQuantity());});
+        List<ProductDTO> products = cart.getCartItems().stream()
+                .map( p -> modelMapper.map(p.getProduct(), ProductDTO.class)).toList();
+        cartDTO.setProducts(products);
+        return cartDTO;
+    }
+
     private Cart createCart() {
         Cart userCart = cartRepository.findKartByEmail((authUtil.loggedInEmail()));
         if (userCart != null) {
