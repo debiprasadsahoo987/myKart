@@ -94,11 +94,16 @@ public class CartServiceImpl implements CartService {
             throw new APIException("No carts found.");
         }
 
-        List<CartDTO> cartDTOS;
-        cartDTOS = carts.stream().map(cart -> {
+        List<CartDTO> cartDTOS = carts.stream().map(cart -> {
             CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-            List<ProductDTO> products = cart.getCartItems().stream().map(
-                    p -> modelMapper.map(p.getProduct(), ProductDTO.class)).toList();
+
+            List<ProductDTO> products =
+                    cart.getCartItems().stream().map(cartItem -> {
+                        ProductDTO productDTO = modelMapper.map(cartItem.getProduct(), ProductDTO.class);
+                        productDTO.setProductQuantity(cartItem.getQuantity());
+                        return productDTO;
+                    }).toList();
+
             cartDTO.setProducts(products);
             return cartDTO;
         }).toList();
@@ -107,7 +112,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartDTO getCart(String emailId, Long cartId) {
-        Cart cart = cartRepository.findKartByEmailAndCartId(emailId, cartId);
+        Cart cart = cartRepository.findCartByEmailAndCartId(emailId, cartId);
         if (cart == null) {
             throw new ResourceNotFoundException("Cart", "cartId", cartId);
         }
@@ -127,7 +132,7 @@ public class CartServiceImpl implements CartService {
     public CartDTO updateProductQuantityInCart(Long productId, Integer quantity) {
 
         String email = authUtil.loggedInEmail();
-        Cart userCart = cartRepository.findKartByEmail(email);
+        Cart userCart = cartRepository.findCartByEmail(email);
         Long cartId = userCart.getCartId();
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart", "cartId", cartId));
@@ -215,7 +220,7 @@ public class CartServiceImpl implements CartService {
     }
 
     private Cart createCart() {
-        Cart userCart = cartRepository.findKartByEmail((authUtil.loggedInEmail()));
+        Cart userCart = cartRepository.findCartByEmail((authUtil.loggedInEmail()));
         if (userCart != null) {
             return userCart;
         }
