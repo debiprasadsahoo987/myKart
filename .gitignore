@@ -20,6 +20,7 @@ target/
 *.ipr
 #Igonore application properties
 application.properties
+**/application.properties
 
 ### NetBeans ###
 /nbproject/private/
