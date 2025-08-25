@@ -38,6 +38,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Value("${project.image}")
     private String path;
+    @Value("${image.base.url}")
+    private String imageBaseUrl;
     @Autowired
     private CartRepository cartRepository;
     @Autowired
@@ -79,8 +81,11 @@ public class ProductServiceImpl implements ProductService {
         Page<Product> pageProducts = productRepository.findAll(pageable);
 
         List<Product> products = pageProducts.getContent();
-        List<ProductDTO> productDTOS = products.stream().map(product -> modelMapper.map(product, ProductDTO.class)).toList();
-
+        List<ProductDTO> productDTOS = products.stream().map(product -> {
+            ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+            productDTO.setProductImage(constructImageUrl(product.getProductImage()));
+            return productDTO;
+        }).toList();
         if(products.isEmpty()){
             throw new APIException("No products found");
         }
@@ -94,6 +99,10 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setLastPage(pageProducts.isLast());
 
         return productResponse;
+    }
+
+    private String constructImageUrl(String imageName) {
+        return imageBaseUrl.endsWith("/") ? imageBaseUrl + imageName : imageBaseUrl + "/" + imageName;
     }
 
     @Override
