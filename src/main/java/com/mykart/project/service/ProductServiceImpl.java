@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,24 +47,24 @@ public class ProductServiceImpl implements ProductService {
     private CartService cartService;
 
     @Override
-    public ProductDTO addProduct(Long categoryId, ProductDTO productDTO){
+    public ProductDTO addProduct(Long categoryId, ProductDTO productDTO) {
         Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
 
         boolean isProductNotPresent = true;
 
         List<Product> products = category.getProducts();
-        for(Product product:products){
+        for (Product product : products) {
             if (product.getProductName().equals(productDTO.getProductName())) {
                 isProductNotPresent = false;
                 break;
             }
         }
 
-        if(isProductNotPresent){
+        if (isProductNotPresent) {
             Product product = modelMapper.map(productDTO, Product.class);
             product.setProductImage("default.png");
             product.setCategory(category);
-            double specialPrice =  product.getProductPrice() - ((product.getProductDiscount() * 0.01) * product.getProductPrice());
+            double specialPrice = product.getProductPrice() - ((product.getProductDiscount() * 0.01) * product.getProductPrice());
             product.setSpecialPrice(specialPrice);
             Product savedProduct = productRepository.save(product);
             return modelMapper.map(savedProduct, ProductDTO.class);
@@ -74,11 +75,28 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder, String keyword, String category) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-        Page<Product> pageProducts = productRepository.findAll(pageable);
+
+        Specification<Product> specification = (root, query, cb) -> cb.conjunction(); // match-all
+
+        if (keyword != null && !keyword.isEmpty()) {
+            specification = specification.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("productName")), "%" + keyword.toLowerCase() + "%")
+            );
+        }
+
+        if (category != null && !category.isEmpty()) {
+            // Exact match (index-friendly)
+            specification = specification.and((root, query, cb) ->
+                    cb.equal(cb.lower(root.get("category").get("categoryName")), category.toLowerCase())
+            );
+        }
+
+        Page<Product> pageProducts = productRepository.findAll(specification, pageable);
+
 
         List<Product> products = pageProducts.getContent();
         List<ProductDTO> productDTOS = products.stream().map(product -> {
@@ -86,7 +104,7 @@ public class ProductServiceImpl implements ProductService {
             productDTO.setProductImage(constructImageUrl(product.getProductImage()));
             return productDTO;
         }).toList();
-        if(products.isEmpty()){
+        if (products.isEmpty()) {
             throw new APIException("No products found");
         }
 
@@ -117,7 +135,7 @@ public class ProductServiceImpl implements ProductService {
 
         List<Product> products = pageProducts.getContent();
 
-        if(products.isEmpty()){
+        if (products.isEmpty()) {
             throw new APIException("No products found for the category: " + category.getCategoryName());
         }
 
@@ -143,7 +161,7 @@ public class ProductServiceImpl implements ProductService {
 
         List<Product> products = pageProducts.getContent();
 
-        if(products.isEmpty()){
+        if (products.isEmpty()) {
             throw new APIException("No products found for the keyword: " + keyword);
         }
 
@@ -169,7 +187,7 @@ public class ProductServiceImpl implements ProductService {
         existingProductFromDb.setProductQuantity(product.getProductQuantity());
         existingProductFromDb.setProductPrice(product.getProductPrice());
         existingProductFromDb.setProductDiscount(product.getProductDiscount());
-        double specialPrice =  product.getProductPrice() - ((product.getProductDiscount() * 0.01) * product.getProductPrice());
+        double specialPrice = product.getProductPrice() - ((product.getProductDiscount() * 0.01) * product.getProductPrice());
         existingProductFromDb.setSpecialPrice(specialPrice);
 
         Product updatedProductDTO = productRepository.save(existingProductFromDb);
@@ -177,12 +195,12 @@ public class ProductServiceImpl implements ProductService {
         List<Cart> carts = cartRepository.findCartsByProductId(productId);
         List<CartDTO> cartDTOS = carts.stream().map(cart -> {
             CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-            List<ProductDTO> products = cart.getCartItems().stream().map(p->modelMapper.map(p.getProduct(), ProductDTO.class)).toList();
+            List<ProductDTO> products = cart.getCartItems().stream().map(p -> modelMapper.map(p.getProduct(), ProductDTO.class)).toList();
             cartDTO.setProducts(products);
             return cartDTO;
         }).toList();
 
-        cartDTOS.forEach( cart -> cartService.updateProductInCarts(cart.getCartId(), productId));
+        cartDTOS.forEach(cart -> cartService.updateProductInCarts(cart.getCartId(), productId));
 
         return modelMapper.map(updatedProductDTO, ProductDTO.class);
     }
