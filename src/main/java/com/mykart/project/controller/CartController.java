@@ -2,6 +2,7 @@ package com.mykart.project.controller;
 
 import com.mykart.project.model.Cart;
 import com.mykart.project.payload.CartDTO;
+import com.mykart.project.payload.CartItemDTO;
 import com.mykart.project.repositories.CartRepository;
 import com.mykart.project.service.CartService;
 import com.mykart.project.util.AuthUtil;
@@ -22,6 +23,13 @@ public class CartController {
     private AuthUtil authUtil;
     @Autowired
     private CartRepository cartRepository;
+
+
+    @PostMapping("/cart/create")
+    public ResponseEntity<String> createOrUpdateCart(@RequestBody List<CartItemDTO> cartItems) {
+        String response = cartService.createOrUpdateCartWithItems(cartItems);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
 
     @PostMapping("/carts/products/{productId}/quantity/{quantity}")
     public ResponseEntity<CartDTO> addProduct(@PathVariable Long productId,
@@ -48,7 +56,7 @@ public class CartController {
     @PutMapping("/cart/products/{productId}/quantity/{operation}")
     public ResponseEntity<CartDTO> updateCartProduct(@PathVariable Long productId,
                                                      @PathVariable String operation) {
-        CartDTO cartDTO = cartService.updateProductQuantityInCart(productId, operation.equalsIgnoreCase("delete") ? -1 : 1);
+        CartDTO cartDTO = cartService.updateQuantityInCart(productId, operation.equalsIgnoreCase("delete") ? -1 : 1);
         return new ResponseEntity<>(cartDTO, HttpStatus.OK);
     }
 

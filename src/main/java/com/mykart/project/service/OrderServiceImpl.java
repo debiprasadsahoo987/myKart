@@ -88,7 +88,7 @@ public class OrderServiceImpl implements OrderService {
         cart.getCartItems().forEach(cartItem -> {
             int quantity = cartItem.getQuantity();
             Product product = cartItem.getProduct();
-            product.setProductQuantity(product.getProductQuantity() - quantity);
+            product.setQuantity(product.getQuantity() - quantity);
             productRepository.save(product);
 
             //5. Clear the cart
